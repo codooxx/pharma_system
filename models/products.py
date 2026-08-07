@@ -5,7 +5,7 @@ from models.database import Base
 class Product(Base):
     __tablename__ = "products"
 
-    id = Column(Integer, primary_order=True, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     barcode = Column(String, unique=True, index=True, nullable=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
