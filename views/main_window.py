@@ -1,11 +1,13 @@
 import tkinter as tk
+from tkinter import ttk
 from views.sales_view import SalesView
+from views.purchases_view import PurchasesView
 
 class PharmaApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("نظام الصيدلية المتكامل - Pharma System")
-        self.geometry("950x650")
+        self.geometry("950x680")
         self.configure(bg="#1B2A4A")
 
         self.lift()
@@ -13,8 +15,15 @@ class PharmaApp(tk.Tk):
         self.after_idle(self.attributes, '-topmost', False)
         self.focus_force()
 
-        self.sales_view = SalesView(self)
-        self.sales_view.pack(fill="both", expand=True)
+        # Tabbed Navigation Setup
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True)
+
+        self.sales_view = SalesView(self.notebook)
+        self.purchases_view = PurchasesView(self.notebook)
+
+        self.notebook.add(self.sales_view, text=" شاشة المبيعات (POS) ")
+        self.notebook.add(self.purchases_view, text=" شاشة المشتريات والمخزون ")
 
         self.bind_shortcuts()
 
