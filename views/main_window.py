@@ -8,7 +8,6 @@ class PharmaApp(tk.Tk):
         self.geometry("950x650")
         self.configure(bg="#1B2A4A")
 
-        # إجبار النافذة على الظهور في مقدمة الشاشة على Mac
         self.lift()
         self.attributes('-topmost', True)
         self.after_idle(self.attributes, '-topmost', False)
@@ -20,7 +19,7 @@ class PharmaApp(tk.Tk):
         self.bind_shortcuts()
 
     def bind_shortcuts(self):
-        self.bind("<F9>", lambda e: self.sales_view.entry_search.focus_set())
+        self.bind("<F9>", lambda e: self.sales_view.combo_search.focus_set())
         self.bind("<Control-s>", lambda e: self.sales_view.checkout())
 
 if __name__ == "__main__":

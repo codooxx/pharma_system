@@ -9,17 +9,26 @@ class SalesView(tk.Frame):
         super().__init__(parent, bg="#1B2A4A")
         self.parent = parent
         self.cart = []
+        self.search_results_map = {}  # لحفظ نتائج البحث والربط السريع
         self.setup_ui()
 
     def setup_ui(self):
+        # 1. شريط البحث والخيارات المنسدلة (Auto-complete)
         search_frame = tk.LabelFrame(self, text=" إدخال الأصناف (F9) ", fg="white", bg="#1B2A4A", font=("Arial", 11, "bold"))
         search_frame.pack(fill="x", padx=15, pady=10)
 
-        tk.Label(search_frame, text="اسم الصنف / الباركود:", fg="white", bg="#1B2A4A").pack(side="right", padx=5, pady=5)
-        self.entry_search = tk.Entry(search_frame, font=("Arial", 12), justify="right")
-        self.entry_search.pack(side="right", fill="x", expand=True, padx=5, pady=5)
-        self.entry_search.bind("<Return>", self.perform_search)
+        tk.Label(search_frame, text="ابحث باسم الصنف أو الباركود:", fg="white", bg="#1B2A4A").pack(side="right", padx=5, pady=5)
+        
+        # قائمة البحث التفاعلية
+        self.combo_search = ttk.Combobox(search_frame, font=("Arial", 12), justify="right")
+        self.combo_search.pack(side="right", fill="x", expand=True, padx=5, pady=5)
+        
+        # ربط الأحداث: الكتابة تُظهر القائمة، واختيار صنف يضيفه للفاتورة
+        self.combo_search.bind("<KeyRelease>", self.on_key_release)
+        self.combo_search.bind("<<ComboboxSelected>>", self.on_select_item)
+        self.combo_search.bind("<Return>", self.on_select_item)
 
+        # 2. جدول الفاتورة (Treeview)
         table_frame = tk.Frame(self, bg="#1B2A4A")
         table_frame.pack(fill="both", expand=True, padx=15, pady=5)
 
@@ -42,6 +51,7 @@ class SalesView(tk.Frame):
 
         self.tree.pack(fill="both", expand=True)
 
+        # 3. الشريط السفلي وإجمالي الفاتورة
         bottom_frame = tk.Frame(self, bg="#1B2A4A")
         bottom_frame.pack(fill="x", padx=15, pady=10)
 
@@ -51,9 +61,14 @@ class SalesView(tk.Frame):
         btn_checkout = tk.Button(bottom_frame, text="حفظ وإتمام البيع (Ctrl+S)", bg="#4ECCA3", fg="black", font=("Arial", 12, "bold"), command=self.checkout)
         btn_checkout.pack(side="left", padx=10)
 
-    def perform_search(self, event=None):
-        query = self.entry_search.get().strip()
+    def on_key_release(self, event):
+        # تجاهل مفاتيح الأسهم والـ Enter حتى يتنقل المستخدم بسلاسة داخل القائمة
+        if event.keysym in ("Up", "Down", "Return", "Left", "Right", "Escape"):
+            return
+
+        query = self.combo_search.get().strip()
         if not query:
+            self.combo_search['values'] = []
             return
 
         db = SessionLocal()
@@ -61,11 +76,24 @@ class SalesView(tk.Frame):
         db.close()
 
         if results:
-            item = results[0]
+            self.search_results_map = {}
+            display_list = []
+            for item in results:
+                display_str = f"{item['name']} - [{item['default_unit']}] - {item['default_price']} ج.س"
+                display_list.append(display_str)
+                self.search_results_map[display_str] = item
+
+            self.combo_search['values'] = display_list
+            # فتح القائمة المنسدلة تلقائياً لعرض الخيارات
+            self.combo_search.event_generate('<Down>')
+
+    def on_select_item(self, event=None):
+        selected_text = self.combo_search.get()
+        if selected_text in self.search_results_map:
+            item = self.search_results_map[selected_text]
             self.add_to_cart(item["id"], item["name"], item["default_unit"], 1, item["default_price"], 1)
-            self.entry_search.delete(0, tk.END)
-        else:
-            messagebox.showwarning("تنبيه", "الصنف غير موجود بالمخزون!")
+            self.combo_search.set('')
+            self.combo_search['values'] = []
 
     def add_to_cart(self, prod_id, name, unit_name, qty, price, unit_id):
         total = qty * price
