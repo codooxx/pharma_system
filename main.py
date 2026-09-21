@@ -1,16 +1,7 @@
-from models.database import engine, Base
-from security.licensing import generate_hardware_id
-from views.main_window import PharmaApp
+from models.database import Base, SessionLocal, engine
 import models.products
-import models.inventory
-
+from services.auth import ensure_admin
+from views.app import PharmacyApp
 def main():
-    Base.metadata.create_all(bind=engine)
-    hwid = generate_hardware_id()
-    print(f"[+] System Started. HWID: {hwid}")
-
-    app = PharmaApp()
-    app.mainloop()
-
-if __name__ == "__main__":
-    main()
+    Base.metadata.create_all(bind=engine); db=SessionLocal(); ensure_admin(db); db.close(); PharmacyApp().mainloop()
+if __name__=="__main__": main()
